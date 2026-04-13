@@ -1,0 +1,16 @@
+# --- backend ---
+backend/build/
+backend/.gradle/
+backend/.idea/
+
+# --- frontend Android ---
+frontend/build/
+frontend/.gradle/
+frontend/local.properties/
+*.iml
+
+# --- env files ---
+.env
+
+# --- OS ---
+.DS_Store
