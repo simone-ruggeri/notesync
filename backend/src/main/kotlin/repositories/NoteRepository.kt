@@ -1,6 +1,6 @@
 package com.example.repositories
 
-import com.example.Notes
+import com.example.plugins.Notes
 import com.example.models.Note
 import com.example.models.NoteRequest
 import org.jetbrains.exposed.sql.*

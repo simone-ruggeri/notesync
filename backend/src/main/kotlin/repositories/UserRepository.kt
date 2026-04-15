@@ -1,6 +1,6 @@
 package com.example.repositories
 
-import com.example.Users
+import com.example.plugins.Users
 import com.example.models.User
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insert
