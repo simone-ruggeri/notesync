@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.logback.classic)
     implementation(libs.ktor.server.config.yaml)
     implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("org.mindrot:jbcrypt:0.4")
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
 }
