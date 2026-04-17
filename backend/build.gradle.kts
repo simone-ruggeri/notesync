@@ -31,6 +31,18 @@ dependencies {
     implementation(libs.ktor.server.config.yaml)
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.mindrot:jbcrypt:0.4")
+
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
+
+    // ── Dipendenze di test ───────────────────────────────
+    // Framework di test Ktor: fornisce testApplication e client HTTP per i test
+    //testImplementation("io.ktor:ktor-server-test-host:2.3.12")
+    // Client HTTP da usare nei test di integrazione
+    testImplementation("io.ktor:ktor-client-content-negotiation:2.3.12")
+    testImplementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
+    // Framework di asserzioni Kotlin (sostituisce JUnit assertions con sintassi più leggibile)
+    testImplementation(kotlin("test"))
+    // H2: database in-memoria per i test (evita di dipendere da PostgreSQL nei test)
+    testImplementation("com.h2database:h2:2.2.224")
 }

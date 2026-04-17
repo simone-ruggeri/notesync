@@ -44,15 +44,18 @@ object Notes : Table("notes") {
 
 // Funzione di configurazione
 fun Application.configureDatabases() {
-
-    val dbUrl = System.getenv("DB_URL")
+    // Legge prima dalla configurazione Ktor (usata nei test),
+    // poi dalle variabili d'ambiente (usata in produzione/Docker)
+    val dbUrl = environment.config.propertyOrNull("postgres.url")?.getString()
+        ?: System.getenv("DB_URL")
         ?: "jdbc:postgresql://localhost:5432/notesync"
 
-    val dbUser = System.getenv("DB_USER")
-        ?: "notesync_user"
+    val dbUser = environment.config.propertyOrNull("postgres.user")?.getString()
+        ?: System.getenv("DB_USER") ?: "notesync_user"
 
-    val dbPass = System.getenv("DB_PASS")
-        ?: "notesync_pass"
+    val dbPass =
+        environment.config.propertyOrNull("postgres.password")?.getString()
+            ?: System.getenv("DB_PASS") ?: "notesync_pass"
 
     val config = HikariConfig().apply {
         jdbcUrl = dbUrl

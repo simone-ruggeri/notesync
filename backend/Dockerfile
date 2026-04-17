@@ -1,11 +1,11 @@
 # Stage 1: Build — compila l'applicazione
-FROM gradle:8.5-jdk17 AS build
+FROM gradle:8.12-jdk21 AS build
 WORKDIR /app
 COPY . .
 # Costruisce il fat-jar (un jar che contiene tutte le dipendenze)
 RUN gradle buildFatJar --no-daemon
 # Stage 2: Runtime — immagine più piccola per produzione
-FROM amazoncorretto:17-alpine
+FROM amazoncorretto:21-alpine
 WORKDIR /app
 COPY --from=build /app/build/libs/*-all.jar app.jar
 EXPOSE 8080
