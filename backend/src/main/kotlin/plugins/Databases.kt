@@ -44,32 +44,37 @@ object Notes : Table("notes") {
 
 // Funzione di configurazione
 fun Application.configureDatabases() {
-    // Legge prima dalla configurazione Ktor (usata nei test),
-    // poi dalle variabili d'ambiente (usata in produzione/Docker)
     val dbUrl = environment.config.propertyOrNull("postgres.url")?.getString()
         ?: System.getenv("DB_URL")
         ?: "jdbc:postgresql://localhost:5432/notesync"
-
     val dbUser = environment.config.propertyOrNull("postgres.user")?.getString()
         ?: System.getenv("DB_USER") ?: "notesync_user"
-
-    val dbPass =
-        environment.config.propertyOrNull("postgres.password")?.getString()
-            ?: System.getenv("DB_PASS") ?: "notesync_pass"
+    val dbPass = environment.config.propertyOrNull("postgres.password")?.getString()
+        ?: System.getenv("DB_PASS") ?: "notesync_pass"
 
     val config = HikariConfig().apply {
         jdbcUrl = dbUrl
         username = dbUser
         password = dbPass
-        driverClassName = "org.postgresql.Driver"
+        // Sceglie il driver in base all'URL — H2 in test, PostgreSQL in prod
+        driverClassName = if (dbUrl.startsWith("jdbc:h2")) {
+            "org.h2.Driver"
+        } else {
+            "org.postgresql.Driver"
+        }
         maximumPoolSize = 10
     }
 
     val dataSource = HikariDataSource(config)
-
     Database.connect(dataSource)
+    val isTest = dbUrl.startsWith("jdbc:h2")
 
     transaction {
+        if (isTest) {
+            // 🔥 reset completo nei test
+            SchemaUtils.drop(Users, Notes)
+        }
+        // sempre ricrea schema
         SchemaUtils.create(Users, Notes)
     }
 }
