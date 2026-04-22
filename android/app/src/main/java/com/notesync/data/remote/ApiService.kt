@@ -1,18 +1,11 @@
 package com.notesync.data.remote
 
+import com.notesync.data.remote.dto.AuthRequest
+import com.notesync.data.remote.dto.AuthResponseDto
+import com.notesync.data.remote.dto.CreateNoteRequest
+import com.notesync.data.remote.dto.NoteDto
 import retrofit2.Response
 import retrofit2.http.*
-
-// DTOs — Data Transfer Objects: oggetti usati per la comunicazione di rete
-// Separati dai modelli di dominio per disaccoppiare la UI dai dettagli della rete
-data class NoteDto(
-    val id: String, val title: String, val content: String,
-    val createdAt: Long, val updatedAt: Long
-)
-
-data class CreateNoteRequest(val title: String, val content: String)
-data class AuthRequest(val email: String, val password: String)
-data class AuthResponseDto(val token: String, val userId: String)
 
 interface ApiService {
     @POST("api/auth/register")

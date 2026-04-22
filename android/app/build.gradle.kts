@@ -68,6 +68,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     // DataStore — per salvare JWT token
     implementation(libs.androidx.datastore.preferences)
+    // Koin
+    implementation(libs.koin.androidx.compose)
     // Test
     testImplementation(libs.junit)
     testImplementation(libs.mockito.kotlin)
