@@ -3,22 +3,17 @@ package com.notesync.data.local
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
-// @Dao = Data Access Object
-// Interfaccia con le operazioni che vogliamo fare sul database
 @Dao
 interface NoteDao {
-    // Flow<List<NoteEntity>>: emette automaticamente una nuova lista
-    // ogni volta che i dati nel database cambiano.
-    // Questo è il "reactive programming": la UI si aggiorna da sola.
-    @Query("SELECT * FROM notes ORDER BY updatedAt DESC")
-    fun getAllNotes(): Flow<List<NoteEntity>>
+    @Query("SELECT * FROM notes WHERE userId = :userId AND syncStatus != 'PENDING_DELETE' ORDER BY updatedAt DESC")
+    fun getAllNotes(userId: String): Flow<List<NoteEntity>>
 
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getNoteById(id: String): NoteEntity?
 
-    // @Insert con OnConflictStrategy.REPLACE:
-    // se esiste già una nota con lo stesso ID, la sovrascrive.
-    // Utile durante la sincronizzazione.
+    @Query("SELECT * FROM notes WHERE serverId = :serverId LIMIT 1")
+    suspend fun getNoteByServerId(serverId: String): NoteEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNote(note: NoteEntity)
 
@@ -34,7 +29,9 @@ interface NoteDao {
     @Query("DELETE FROM notes")
     suspend fun deleteAll()
 
-    // Recupera tutte le note che devono essere sincronizzate
-    @Query("SELECT * FROM notes WHERE syncStatus != 'SYNCED'")
-    suspend fun getPendingSync(): List<NoteEntity>
+    @Query("DELETE FROM notes WHERE userId = :userId")
+    suspend fun deleteAllForUser(userId: String)
+
+    @Query("SELECT * FROM notes WHERE userId = :userId AND syncStatus != 'SYNCED'")
+    suspend fun getPendingSync(userId: String): List<NoteEntity>
 }

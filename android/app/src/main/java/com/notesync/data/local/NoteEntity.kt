@@ -9,6 +9,7 @@ data class NoteEntity(
     @PrimaryKey
     val id: String,        // UUID locale (generato dall'app, non dal server)
     val serverId: String?, // ID assegnato dal backend (null fino a sincronizzazione)
+    val userId: String,    // proprietario della nota, usato per isolare i dati tra utenti
     val title: String,
     val content: String,
     val createdAt: Long,
