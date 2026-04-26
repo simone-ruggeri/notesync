@@ -13,10 +13,10 @@ val databaseModule = module {
     // in startKoin dentro NoteApplication.
     single {
         Room.databaseBuilder(
-            androidContext(),
-            NoteDatabase::class.java,
-            "note_database"
-        ).fallbackToDestructiveMigration().build()
+                androidContext(),
+                NoteDatabase::class.java,
+                "note_database"
+            ).fallbackToDestructiveMigration(false).build()
     }
     // single: NoteDao viene ottenuto dal database già creato sopra.
     // get() recupera automaticamente l'istanza di NoteDatabase definita sopra.

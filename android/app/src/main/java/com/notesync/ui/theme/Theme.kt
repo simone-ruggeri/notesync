@@ -9,6 +9,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
@@ -18,9 +19,15 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = Color(0xFF006B6B),
+    onPrimary = Color.White,
+    primaryContainer= Color(0xFFE6F4F4),
+    secondary = Color(0xFF1A5276),
+    onSecondary = Color.White,
+    background = Color(0xFFF8F9FA),
+    surface = Color.White,
+    onSurface = Color(0xFF1C2833),
+    error = Color(0xFFC0392B),
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -51,7 +58,7 @@ fun NoteSyncTheme(
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = LightColorScheme,
         typography = Typography,
         content = content
     )
