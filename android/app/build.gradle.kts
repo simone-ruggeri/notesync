@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.devtools.ksp")
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -49,17 +49,20 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.material3)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     // Room — database locale
-    implementation(libs.androidx.room.runtime.v261)
+    implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
-    implementation(libs.androidx.room.ktx.v261)
+    implementation(libs.androidx.room.ktx)
     // Retrofit — HTTP client
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
