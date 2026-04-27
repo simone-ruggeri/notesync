@@ -1,31 +1,39 @@
 package com.notesync
 
 import android.app.Application
+import com.notesync.di.appModule
+import com.notesync.di.databaseModule
+import com.notesync.di.networkModule
+import com.notesync.util.TokenManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
-import com.notesync.di.databaseModule
-import com.notesync.di.networkModule
-import com.notesync.di.appModule
 
 class NotesSyncApp : Application() {
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val tokenManager: TokenManager by inject()
+
     override fun onCreate() {
         super.onCreate()
-        // startKoin avvia il container DI di Koin.
-        // A differenza di Hilt, non c'è nessuna annotazione da aggiungere:
-        // basta chiamare questa funzione nell'Application.
         startKoin {
-            // androidLogger: mostra i log di Koin in debug (utile in sviluppo)
             androidLogger(Level.DEBUG)
-            // androidContext: fornisce il Context dell'Application a tutti i moduli
             androidContext(this@NotesSyncApp)
-            // modules: lista dei moduli che contengono le definizioni delle dipendenze
-            modules(
-                databaseModule,
-                networkModule,
-                appModule
-            )
+            modules(databaseModule, networkModule, appModule)
         }
+        applicationScope.launch {
+            tokenManager.initCache()
+        }
+    }
+
+    override fun onTerminate() {
+        super.onTerminate()
+        applicationScope.cancel()
     }
 }

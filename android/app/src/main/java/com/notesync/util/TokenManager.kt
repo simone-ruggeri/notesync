@@ -19,10 +19,17 @@ class TokenManager(private val context: Context) {
         private val USER_ID_KEY = stringPreferencesKey("user_id")
     }
 
+    // Cache in memoria: AuthInterceptor legge qui in modo sincrono,
+    // senza runBlocking su DataStore a ogni richiesta.
+    @Volatile private var _cachedToken: String? = null
+
+    fun getCachedToken(): String? = _cachedToken
+
     val userIdFlow: Flow<String?> = context.dataStore.data
         .map { preferences -> preferences[USER_ID_KEY] }
 
     suspend fun saveToken(token: String) {
+        _cachedToken = token
         context.dataStore.edit { preferences ->
             preferences[TOKEN_KEY] = token
         }
@@ -51,7 +58,13 @@ class TokenManager(private val context: Context) {
             preferences.remove(TOKEN_KEY)
             preferences.remove(USER_ID_KEY)
         }
+        _cachedToken = null
     }
 
     suspend fun isLoggedIn(): Boolean = getToken() != null
+
+    // Chiamato all'avvio dell'app per precaricare il token dalle sessioni precedenti.
+    suspend fun initCache() {
+        _cachedToken = getToken()
+    }
 }

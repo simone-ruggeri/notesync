@@ -113,7 +113,7 @@ class NoteRepository(
 
     suspend fun logout() {
         val userId = tokenManager.getUserId()
-        if (userId != null) noteDao.deleteAllForUser(userId)
+        if (userId != null) noteDao.deleteSyncedForUser(userId)
         tokenManager.clearToken()
     }
 
@@ -127,9 +127,11 @@ class NoteRepository(
                         syncStatus = SyncStatus.SYNCED.name
                     )
                 )
+            } else {
+                Log.w(TAG, "syncCreate fallita per ${entity.id}: HTTP ${response.code()}")
             }
         } catch (e: Exception) {
-            Log.w(TAG, "syncCreate fallita per ${entity.id}: ${e.message}")
+            Log.w(TAG, "syncCreate eccezione per ${entity.id}: ${e.message}")
         }
     }
 

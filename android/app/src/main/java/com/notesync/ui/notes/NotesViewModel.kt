@@ -24,13 +24,12 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
     val uiState: StateFlow<NotesUiState> = _uiState.asStateFlow()
 
     init {
-        // Osserva il Flow di Room: ogni modifica al DB aggiorna la UI automaticamente
         viewModelScope.launch {
             repository.notes.collect { notes ->
                 _uiState.update { it.copy(notes = notes) }
             }
         }
-        syncPending()
+        refresh()
     }
 
     fun deleteNote(id: String) {
@@ -52,6 +51,7 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
+                repository.syncPending()
                 repository.refreshFromServer()
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Errore sincronizzazione: ${e.message}") }
@@ -74,10 +74,6 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
-    }
-
-    private fun syncPending() {
-        viewModelScope.launch { repository.syncPending() }
     }
 
 }

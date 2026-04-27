@@ -32,6 +32,9 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE userId = :userId")
     suspend fun deleteAllForUser(userId: String)
 
+    @Query("DELETE FROM notes WHERE userId = :userId AND syncStatus = 'SYNCED'")
+    suspend fun deleteSyncedForUser(userId: String)
+
     @Query("SELECT * FROM notes WHERE userId = :userId AND syncStatus != 'SYNCED'")
     suspend fun getPendingSync(userId: String): List<NoteEntity>
 }
