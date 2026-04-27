@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.notesync.ui.auth.LoginScreen
 import com.notesync.ui.notes.NoteDetailScreen
+import com.notesync.ui.notes.NoteMode
 import com.notesync.ui.notes.NotesScreen
 import com.notesync.util.TokenManager
 
@@ -63,10 +64,11 @@ fun NavGraph(
         }
         composable(NavigationRoute.Notes.route) {
             NotesScreen(
-                onNavigateToDetail = { noteId ->
-                    navController.navigate(
-                        NavigationRoute.NoteDetail.createRoute(noteId ?: "new")
-                    )
+                onNavigateToCreate = {
+                    navController.navigate(NavigationRoute.NoteCreate.route)
+                },
+                onNavigateToEdit = { noteId ->
+                    navController.navigate(NavigationRoute.NoteEdit.createRoute(noteId))
                 },
                 onLogout = {
                     navController.navigate(NavigationRoute.Login.route) {
@@ -75,12 +77,19 @@ fun NavGraph(
                 }
             )
         }
+        composable(NavigationRoute.NoteCreate.route) {
+            NoteDetailScreen(
+                mode = NoteMode.Create,
+                onBack = { navController.popBackStack() }
+            )
+        }
         composable(
-            route = NavigationRoute.NoteDetail.route,
+            route = NavigationRoute.NoteEdit.route,
             arguments = listOf(navArgument("noteId") { type = NavType.StringType })
         ) { backStackEntry ->
+            val noteId = backStackEntry.arguments?.getString("noteId") ?: return@composable
             NoteDetailScreen(
-                noteId = backStackEntry.arguments?.getString("noteId"),
+                mode = NoteMode.Edit(noteId),
                 onBack = { navController.popBackStack() }
             )
         }

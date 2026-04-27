@@ -15,61 +15,55 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteDetailScreen(
-    noteId: String?,
-    // null o "new" = creazione; ID stringa = modifica
+    mode: NoteMode,
     onBack: () -> Unit,
-    viewModel: NotesViewModel = koinViewModel()
+    viewModel: NoteDetailViewModel = koinViewModel(parameters = { parametersOf(mode) })
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    // Se stiamo modificando, carica i dati della nota esistente
-    val existingNote = remember(noteId, uiState.notes) {
-        if (noteId != null && noteId != "new")
-            uiState.notes.find { it.id == noteId }
-        else null
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.savedSuccessfully) {
+        if (uiState.savedSuccessfully) onBack()
     }
-    var title by remember(existingNote) { mutableStateOf(existingNote?.title ?: "") }
-    var content by remember(existingNote) { mutableStateOf(existingNote?.content ?: "") }
-    val isNew = existingNote == null
+
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (isNew) "Nuova nota" else "Modifica nota") },
+                title = { Text(if (mode is NoteMode.Create) "Nuova nota" else "Modifica nota") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Indietro"
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
                     }
                 },
                 actions = {
-                    // Pulsante Salva: attivo solo se il titolo non e' vuoto
                     IconButton(
-                        onClick = {
-                            if (isNew) viewModel.createNote(title, content)
-                            else
-                                viewModel.updateNote(
-                                    existingNote.id,
-                                    title, content
-                                )
-                            onBack()
-                        },
-                        enabled = title.isNotBlank()
+                        onClick = { viewModel.save() },
+                        enabled = uiState.title.isNotBlank() && !uiState.isSaving
                     ) {
                         Icon(Icons.Default.Check, contentDescription = "Salva")
                     }
@@ -84,8 +78,8 @@ fun NoteDetailScreen(
                 .padding(16.dp)
         ) {
             OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
+                value = uiState.title,
+                onValueChange = { viewModel.onTitleChange(it) },
                 label = { Text("Titolo") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -93,8 +87,8 @@ fun NoteDetailScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedTextField(
-                value = content,
-                onValueChange = { content = it },
+                value = uiState.content,
+                onValueChange = { viewModel.onContentChange(it) },
                 label = { Text("Contenuto") },
                 modifier = Modifier.fillMaxSize(),
                 maxLines = Int.MAX_VALUE

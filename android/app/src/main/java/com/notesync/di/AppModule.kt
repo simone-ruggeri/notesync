@@ -2,8 +2,9 @@ package com.notesync.di
 
 import com.notesync.data.repository.AuthRepository
 import com.notesync.data.repository.NoteRepository
-import com.notesync.ui.notes.NotesViewModel
 import com.notesync.ui.auth.AuthViewModel
+import com.notesync.ui.notes.NoteDetailViewModel
+import com.notesync.ui.notes.NotesViewModel
 import com.notesync.util.TokenManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -30,7 +31,7 @@ val appModule = module {
             tokenManager = get()
         )
     }
-    // viewModel: Koin gestisce il ciclo di vita del ViewModel.
     viewModel { NotesViewModel(get()) }
     viewModel { AuthViewModel(get()) }
+    viewModel { params -> NoteDetailViewModel(get(), params.get()) }
 }

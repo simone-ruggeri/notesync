@@ -16,12 +16,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,18 +38,30 @@ import androidx.compose.material.icons.filled.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(
-    onNavigateToDetail: (String?) -> Unit,
+    onNavigateToCreate: () -> Unit,
+    onNavigateToEdit: (String) -> Unit,
     onLogout: () -> Unit,
     viewModel: NotesViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(uiState.shouldLogout) {
         if (uiState.shouldLogout) {
             viewModel.onLogoutHandled()
             onLogout()
         }
     }
+
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("NoteSync") },
@@ -61,7 +76,7 @@ fun NotesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { onNavigateToDetail(null) }) {
+            FloatingActionButton(onClick = onNavigateToCreate) {
                 Icon(Icons.Default.Add, contentDescription = "Nuova nota")
             }
         }
@@ -79,15 +94,11 @@ fun NotesScreen(
                     LazyColumn {
                         items(uiState.notes, key = { it.id }) { note ->
                             NoteItem(note = note,
-                                onClick = { onNavigateToDetail(note.id) },
+                                onClick = { onNavigateToEdit(note.id) },
                                 onDelete = { viewModel.deleteNote(note.id) })
                         }
                     }
             }
-        }
-        // Mostra errori come SnackBar (semplificato)
-        uiState.error?.let {
-            LaunchedEffect(it) { viewModel.clearError() }
         }
     }
 }
