@@ -33,36 +33,6 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
         syncPending()
     }
 
-    fun createNote(title: String, content: String) {
-        viewModelScope.launch {
-            try {
-                repository.createNote(title, content)
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        error = "Errore creazione: " +
-                                e.message
-                    )
-                }
-            }
-        }
-    }
-
-    fun updateNote(id: String, title: String, content: String) {
-        viewModelScope.launch {
-            try {
-                repository.updateNote(id, title, content)
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        error = "Errore aggiornamento: " +
-                                e.message
-                    )
-                }
-            }
-        }
-    }
-
     fun deleteNote(id: String) {
         viewModelScope.launch {
             try {
@@ -83,6 +53,8 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
             _uiState.update { it.copy(isLoading = true) }
             try {
                 repository.refreshFromServer()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Errore sincronizzazione: ${e.message}") }
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
