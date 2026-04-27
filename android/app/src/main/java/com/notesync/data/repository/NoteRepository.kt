@@ -1,6 +1,7 @@
 package com.notesync.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.notesync.data.local.NoteDao
 import com.notesync.data.local.NoteEntity
 import com.notesync.data.local.SyncStatus
@@ -14,7 +15,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 import java.util.UUID
+
+private const val TAG = "NoteRepository"
 
 class NoteRepository(
     private val noteDao: NoteDao,
@@ -27,6 +31,8 @@ class NoteRepository(
             if (userId == null) flowOf(emptyList())
             else noteDao.getAllNotes(userId).map { it.map(NoteEntity::toDomain) }
         }
+
+    suspend fun getNoteById(id: String): Note? = noteDao.getNoteById(id)?.toDomain()
 
     suspend fun createNote(title: String, content: String): NoteEntity {
         val localId = UUID.randomUUID().toString()
@@ -84,27 +90,25 @@ class NoteRepository(
 
     suspend fun refreshFromServer() {
         if (!NetworkUtils.isOnline(context)) return
-        try {
-            val token = "Bearer " + (tokenManager.getToken() ?: return)
-            val currentUserId = tokenManager.getUserId() ?: return
-            val response = apiService.getNotes(token)
-            if (response.isSuccessful) {
-                val serverNotes = response.body() ?: return
-                val entities = serverNotes.map { dto ->
-                    // Riutilizza l'id locale se la nota è già in Room, per evitare duplicati
-                    val existing = noteDao.getNoteByServerId(dto.id)
-                    NoteEntity(
-                        id = existing?.id ?: dto.id,
-                        serverId = dto.id,
-                        userId = currentUserId,
-                        title = dto.title, content = dto.content,
-                        createdAt = dto.createdAt, updatedAt = dto.updatedAt,
-                        syncStatus = SyncStatus.SYNCED.name
-                    )
-                }
-                noteDao.insertAll(entities)
+        val currentUserId = tokenManager.getUserId() ?: return
+        val response = apiService.getNotes()
+        if (response.isSuccessful) {
+            val serverNotes = response.body() ?: return
+            val entities = serverNotes.map { dto ->
+                val existing = noteDao.getNoteByServerId(dto.id)
+                NoteEntity(
+                    id = existing?.id ?: dto.id,
+                    serverId = dto.id,
+                    userId = currentUserId,
+                    title = dto.title, content = dto.content,
+                    createdAt = dto.createdAt, updatedAt = dto.updatedAt,
+                    syncStatus = SyncStatus.SYNCED.name
+                )
             }
-        } catch (e: Exception) { /* fallback silenzioso */ }
+            noteDao.insertAll(entities)
+        } else {
+            throw IOException("Errore server: ${response.code()}")
+        }
     }
 
     suspend fun logout() {
@@ -115,11 +119,7 @@ class NoteRepository(
 
     private suspend fun syncCreate(entity: NoteEntity) {
         try {
-            val token = "Bearer " + (tokenManager.getToken() ?: return)
-            val response = apiService.createNote(
-                token,
-                CreateNoteRequest(entity.title, entity.content)
-            )
+            val response = apiService.createNote(CreateNoteRequest(entity.title, entity.content))
             if (response.isSuccessful) {
                 noteDao.updateNote(
                     entity.copy(
@@ -128,29 +128,29 @@ class NoteRepository(
                     )
                 )
             }
-        } catch (e: Exception) { /* rimane PENDING_CREATE */ }
+        } catch (e: Exception) {
+            Log.w(TAG, "syncCreate fallita per ${entity.id}: ${e.message}")
+        }
     }
 
     private suspend fun syncUpdate(entity: NoteEntity) {
         val serverId = entity.serverId ?: return
         try {
-            val token = "Bearer " + (tokenManager.getToken() ?: return)
-            val response = apiService.updateNote(
-                token, serverId,
-                CreateNoteRequest(entity.title, entity.content)
-            )
+            val response = apiService.updateNote(serverId, CreateNoteRequest(entity.title, entity.content))
             if (response.isSuccessful) noteDao.updateNote(
                 entity.copy(syncStatus = SyncStatus.SYNCED.name)
             )
-        } catch (e: Exception) { /* rimane PENDING_UPDATE */ }
+        } catch (e: Exception) {
+            Log.w(TAG, "syncUpdate fallita per ${entity.id}: ${e.message}")
+        }
     }
 
     private suspend fun syncDelete(entity: NoteEntity): Boolean {
         val serverId = entity.serverId ?: return true
         return try {
-            val token = "Bearer ${tokenManager.getToken() ?: return false}"
-            apiService.deleteNote(token, serverId).isSuccessful
+            apiService.deleteNote(serverId).isSuccessful
         } catch (e: Exception) {
+            Log.w(TAG, "syncDelete fallita per ${entity.id}: ${e.message}")
             false
         }
     }
