@@ -2,8 +2,10 @@ package com.notesync.ui.notes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.notesync.data.local.SyncStatus
 import com.notesync.data.repository.NoteRepository
 import com.notesync.domain.model.Note
+import com.notesync.util.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,24 +14,59 @@ import kotlinx.coroutines.launch
 
 data class NotesUiState(
     val notes: List<Note> = emptyList(),
+    val allNotesCount: Int = 0,
+    val localNotesCount: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val shouldLogout: Boolean = false
+    val shouldLogout: Boolean = false,
+    val searchQuery: String = "",
+    val userEmail: String = ""
 )
 
-// ViewModel standard: nessuna annotazione Koin nelle classi di presentazione.
-// Dichiarato nel modulo con: viewModel { NotesViewModel(get()) }
-class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
+class NotesViewModel(
+    private val repository: NoteRepository,
+    private val tokenManager: TokenManager
+) : ViewModel() {
+
+    private val _allNotes = MutableStateFlow<List<Note>>(emptyList())
     private val _uiState = MutableStateFlow(NotesUiState())
     val uiState: StateFlow<NotesUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             repository.notes.collect { notes ->
-                _uiState.update { it.copy(notes = notes) }
+                _allNotes.value = notes
+                applyFilter()
+            }
+        }
+        viewModelScope.launch {
+            tokenManager.emailFlow.collect { email ->
+                _uiState.update { it.copy(userEmail = email ?: "") }
             }
         }
         refresh()
+    }
+
+    private fun applyFilter() {
+        val query = _uiState.value.searchQuery
+        val all = _allNotes.value
+        val filtered = if (query.isBlank()) all
+        else all.filter { note ->
+            note.title.contains(query, ignoreCase = true) ||
+                    note.content.contains(query, ignoreCase = true)
+        }
+        _uiState.update {
+            it.copy(
+                notes = filtered,
+                allNotesCount = all.size,
+                localNotesCount = all.count { n -> n.syncStatus != SyncStatus.SYNCED }
+            )
+        }
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        applyFilter()
     }
 
     fun deleteNote(id: String) {
@@ -37,12 +74,7 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
             try {
                 repository.deleteNote(id)
             } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        error = "Errore eliminazione: " +
-                                e.message
-                    )
-                }
+                _uiState.update { it.copy(error = "Errore eliminazione: ${e.message}") }
             }
         }
     }
@@ -75,5 +107,4 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
-
 }

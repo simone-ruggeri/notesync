@@ -2,6 +2,7 @@ package com.notesync.ui.notes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.notesync.data.local.SyncStatus
 import com.notesync.data.repository.NoteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +15,9 @@ data class NoteDetailUiState(
     val content: String = "",
     val isSaving: Boolean = false,
     val error: String? = null,
-    val savedSuccessfully: Boolean = false
+    val savedSuccessfully: Boolean = false,
+    val syncStatus: SyncStatus? = null,
+    val updatedAt: Long = System.currentTimeMillis()
 )
 
 class NoteDetailViewModel(
@@ -36,7 +39,14 @@ class NoteDetailViewModel(
         viewModelScope.launch {
             val note = repository.getNoteById(id)
             if (note != null) {
-                _uiState.update { it.copy(title = note.title, content = note.content) }
+                _uiState.update {
+                    it.copy(
+                        title = note.title,
+                        content = note.content,
+                        syncStatus = note.syncStatus,
+                        updatedAt = note.updatedAt
+                    )
+                }
             }
         }
     }

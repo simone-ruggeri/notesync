@@ -31,7 +31,7 @@ val appModule = module {
             tokenManager = get()
         )
     }
-    viewModel { NotesViewModel(get()) }
+    viewModel { NotesViewModel(get(), get()) }
     viewModel { AuthViewModel(get()) }
     viewModel { params -> NoteDetailViewModel(get(), params.get()) }
 }

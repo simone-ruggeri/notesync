@@ -20,6 +20,7 @@ class AuthRepository(
                 val body = response.body()!!
                 tokenManager.saveToken(body.token)
                 tokenManager.saveUserId(body.userId)
+                tokenManager.saveEmail(email)
                 AuthResult.Success(Unit)
             } else {
                 val errorMsg = when (response.code()) {
@@ -41,6 +42,7 @@ class AuthRepository(
                 val body = response.body()!!
                 tokenManager.saveToken(body.token)
                 tokenManager.saveUserId(body.userId)
+                tokenManager.saveEmail(email)
                 AuthResult.Success(Unit)
             } else {
                 AuthResult.Error(

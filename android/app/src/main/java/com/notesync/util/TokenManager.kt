@@ -17,6 +17,7 @@ class TokenManager(private val context: Context) {
     companion object {
         private val TOKEN_KEY = stringPreferencesKey("jwt_token")
         private val USER_ID_KEY = stringPreferencesKey("user_id")
+        private val EMAIL_KEY = stringPreferencesKey("user_email")
     }
 
     // Cache in memoria: AuthInterceptor legge qui in modo sincrono,
@@ -27,6 +28,15 @@ class TokenManager(private val context: Context) {
 
     val userIdFlow: Flow<String?> = context.dataStore.data
         .map { preferences -> preferences[USER_ID_KEY] }
+
+    val emailFlow: Flow<String?> = context.dataStore.data
+        .map { preferences -> preferences[EMAIL_KEY] }
+
+    suspend fun saveEmail(email: String) {
+        context.dataStore.edit { preferences ->
+            preferences[EMAIL_KEY] = email
+        }
+    }
 
     suspend fun saveToken(token: String) {
         _cachedToken = token
@@ -57,6 +67,7 @@ class TokenManager(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences.remove(TOKEN_KEY)
             preferences.remove(USER_ID_KEY)
+            preferences.remove(EMAIL_KEY)
         }
         _cachedToken = null
     }
