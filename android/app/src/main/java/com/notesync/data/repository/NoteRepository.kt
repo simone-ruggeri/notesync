@@ -1,6 +1,5 @@
 package com.notesync.data.repository
 
-import android.content.Context
 import android.util.Log
 import com.notesync.data.local.NoteDao
 import com.notesync.data.local.NoteEntity
@@ -9,7 +8,7 @@ import com.notesync.data.remote.ApiService
 import com.notesync.data.remote.dto.CreateNoteRequest
 import com.notesync.domain.model.Note
 import com.notesync.domain.model.toDomain
-import com.notesync.util.NetworkUtils
+import com.notesync.util.NetworkChecker
 import com.notesync.util.TokenManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -24,7 +23,7 @@ class NoteRepository(
     private val noteDao: NoteDao,
     private val apiService: ApiService,
     private val tokenManager: TokenManager,
-    private val context: Context
+    private val network: NetworkChecker
 ) {
     val notes: Flow<List<Note>> = tokenManager.userIdFlow
         .flatMapLatest { userId ->
@@ -46,7 +45,7 @@ class NoteRepository(
             syncStatus = SyncStatus.PENDING_CREATE.name
         )
         noteDao.insertNote(entity)
-        if (NetworkUtils.isOnline(context)) syncCreate(entity)
+        if (network.isOnline()) syncCreate(entity)
         return entity
     }
 
@@ -58,12 +57,12 @@ class NoteRepository(
             syncStatus = SyncStatus.PENDING_UPDATE.name
         )
         noteDao.updateNote(updated)
-        if (NetworkUtils.isOnline(context)) syncUpdate(updated)
+        if (network.isOnline()) syncUpdate(updated)
     }
 
     suspend fun deleteNote(id: String) {
         val existing = noteDao.getNoteById(id) ?: return
-        if (NetworkUtils.isOnline(context) && existing.serverId != null) {
+        if (network.isOnline() && existing.serverId != null) {
             val deleted = syncDelete(existing)
             if (deleted) noteDao.deleteNote(existing)
             else noteDao.updateNote(existing.copy(syncStatus = SyncStatus.PENDING_DELETE.name))
@@ -75,7 +74,7 @@ class NoteRepository(
     }
 
     suspend fun syncPending() {
-        if (!NetworkUtils.isOnline(context)) return
+        if (!network.isOnline()) return
         val currentUserId = tokenManager.getUserId() ?: return
         noteDao.getPendingSync(currentUserId).forEach { entity ->
             when (entity.syncStatus) {
@@ -89,7 +88,7 @@ class NoteRepository(
     }
 
     suspend fun refreshFromServer() {
-        if (!NetworkUtils.isOnline(context)) return
+        if (!network.isOnline()) return
         val currentUserId = tokenManager.getUserId() ?: return
         val response = apiService.getNotes()
         if (response.isSuccessful) {
