@@ -48,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
@@ -159,7 +160,10 @@ fun NotesScreen(
             when {
                 uiState.isLoading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = SlatePrimary)
+                        CircularProgressIndicator(
+                            color = SlatePrimary,
+                            modifier = Modifier.testTag("loading_indicator")
+                        )
                     }
                 }
                 uiState.notes.isEmpty() && uiState.searchQuery.isBlank() -> {
