@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +39,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -76,6 +78,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(
     onNavigateToCreate: () -> Unit,
@@ -157,43 +160,51 @@ fun NotesScreen(
                 onQueryChange = { viewModel.onSearchQueryChange(it) }
             )
 
-            when {
-                uiState.isLoading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(
-                            color = SlatePrimary,
-                            modifier = Modifier.testTag("loading_indicator")
-                        )
-                    }
-                }
-                uiState.notes.isEmpty() && uiState.searchQuery.isBlank() -> {
-                    NotesEmptyState()
-                }
-                uiState.notes.isEmpty() -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "Nessun risultato per \"${uiState.searchQuery}\"",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary
-                        )
-                    }
-                }
-                else -> {
-                    Text(
-                        text = "LE TUE NOTE",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 4.dp)
-                    )
-                    LazyColumn {
-                        items(uiState.notes, key = { it.id }) { note ->
-                            NoteCard(
-                                note = note,
-                                onClick = { onNavigateToEdit(note.id) },
-                                onLongPress = { noteToDelete = note }
+            PullToRefreshBox(
+                isRefreshing = uiState.isLoading,
+                onRefresh = { viewModel.refresh() },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when {
+                    uiState.isLoading && uiState.notes.isEmpty() -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(
+                                color = SlatePrimary,
+                                modifier = Modifier.testTag("loading_indicator")
                             )
                         }
-                        item { Spacer(modifier = Modifier.height(80.dp)) }
+                    }
+                    uiState.notes.isEmpty() && uiState.searchQuery.isBlank() -> {
+                        NotesEmptyState()
+                    }
+                    uiState.notes.isEmpty() -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "Nessun risultato per \"${uiState.searchQuery}\"",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                    else -> {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            item {
+                                Text(
+                                    text = "LE TUE NOTE",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary,
+                                    modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 4.dp)
+                                )
+                            }
+                            items(uiState.notes, key = { it.id }) { note ->
+                                NoteCard(
+                                    note = note,
+                                    onClick = { onNavigateToEdit(note.id) },
+                                    onLongPress = { noteToDelete = note }
+                                )
+                            }
+                            item { Spacer(modifier = Modifier.height(80.dp)) }
+                        }
                     }
                 }
             }
@@ -218,7 +229,7 @@ private fun NotesTopBar(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "My Notes",
+                text = "NoteSync",
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.White
             )

@@ -16,8 +16,8 @@ val networkModule = module {
 
     single {
         OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
             .addInterceptor(get<AuthInterceptor>())
             .addInterceptor(
                 HttpLoggingInterceptor().apply {

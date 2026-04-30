@@ -95,6 +95,7 @@ class NoteRepository(
             val serverNotes = response.body() ?: return
             val entities = serverNotes.map { dto ->
                 val existing = noteDao.getNoteByServerId(dto.id)
+                    ?: noteDao.getPendingCreateByContent(currentUserId, dto.title, dto.content)
                 NoteEntity(
                     id = existing?.id ?: dto.id,
                     serverId = dto.id,
@@ -120,12 +121,11 @@ class NoteRepository(
         try {
             val response = apiService.createNote(CreateNoteRequest(entity.title, entity.content))
             if (response.isSuccessful) {
-                noteDao.updateNote(
-                    entity.copy(
-                        serverId = response.body()!!.id,
-                        syncStatus = SyncStatus.SYNCED.name
-                    )
-                )
+                val serverId = response.body()?.id ?: run {
+                    Log.w(TAG, "syncCreate: body null per ${entity.id}")
+                    return
+                }
+                noteDao.updateNote(entity.copy(serverId = serverId, syncStatus = SyncStatus.SYNCED.name))
             } else {
                 Log.w(TAG, "syncCreate fallita per ${entity.id}: HTTP ${response.code()}")
             }

@@ -14,6 +14,9 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE serverId = :serverId LIMIT 1")
     suspend fun getNoteByServerId(serverId: String): NoteEntity?
 
+    @Query("SELECT * FROM notes WHERE userId = :userId AND title = :title AND content = :content AND syncStatus = 'PENDING_CREATE' LIMIT 1")
+    suspend fun getPendingCreateByContent(userId: String, title: String, content: String): NoteEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNote(note: NoteEntity)
 
