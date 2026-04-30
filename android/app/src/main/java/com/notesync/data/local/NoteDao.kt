@@ -38,6 +38,12 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE userId = :userId AND syncStatus = 'SYNCED'")
     suspend fun deleteSyncedForUser(userId: String)
 
+    // Elimina le note SYNCED il cui serverId non è più presente nella risposta del server.
+    // Usata dopo ogni refresh per rilevare note cancellate da altri client (es. web).
+    // Le note PENDING_* non vengono toccate: sono operazioni offline non ancora inviate.
+    @Query("DELETE FROM notes WHERE userId = :userId AND syncStatus = 'SYNCED' AND serverId NOT IN (:serverIds)")
+    suspend fun deleteSyncedNotesNotInServerIds(userId: String, serverIds: List<String>)
+
     @Query("SELECT * FROM notes WHERE userId = :userId AND syncStatus != 'SYNCED'")
     suspend fun getPendingSync(userId: String): List<NoteEntity>
 }

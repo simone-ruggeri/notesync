@@ -93,6 +93,7 @@ class NoteRepository(
         val response = apiService.getNotes()
         if (response.isSuccessful) {
             val serverNotes = response.body() ?: return
+            val serverIds = serverNotes.map { it.id }
             val entities = serverNotes.map { dto ->
                 val existing = noteDao.getNoteByServerId(dto.id)
                     ?: noteDao.getPendingCreateByContent(currentUserId, dto.title, dto.content)
@@ -106,6 +107,14 @@ class NoteRepository(
                 )
             }
             noteDao.insertAll(entities)
+            // Rimuove le note locali SYNCED che non esistono più sul server:
+            // significa che sono state eliminate da un altro client (es. web).
+            // Se il server restituisce lista vuota, elimina tutte le note SYNCED.
+            if (serverIds.isEmpty()) {
+                noteDao.deleteSyncedForUser(currentUserId)
+            } else {
+                noteDao.deleteSyncedNotesNotInServerIds(currentUserId, serverIds)
+            }
         } else {
             throw IOException("Errore server: ${response.code()}")
         }
@@ -138,9 +147,18 @@ class NoteRepository(
         val serverId = entity.serverId ?: return
         try {
             val response = apiService.updateNote(serverId, CreateNoteRequest(entity.title, entity.content))
-            if (response.isSuccessful) noteDao.updateNote(
-                entity.copy(syncStatus = SyncStatus.SYNCED.name)
-            )
+            when {
+                response.isSuccessful ->
+                    noteDao.updateNote(entity.copy(syncStatus = SyncStatus.SYNCED.name))
+                response.code() == 404 -> {
+                    // La nota è stata eliminata da un altro client mentre eravamo offline.
+                    // Scarta la modifica locale ed elimina la nota dal DB.
+                    Log.w(TAG, "syncUpdate 404: nota ${entity.id} non trovata sul server, eliminata localmente")
+                    noteDao.deleteNote(entity)
+                }
+                else ->
+                    Log.w(TAG, "syncUpdate fallita per ${entity.id}: HTTP ${response.code()}")
+            }
         } catch (e: Exception) {
             Log.w(TAG, "syncUpdate fallita per ${entity.id}: ${e.message}")
         }
