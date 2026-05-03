@@ -143,7 +143,7 @@ fun NotesScreen(
             FloatingActionButton(
                 onClick = onNavigateToCreate,
                 shape = CircleShape,
-                containerColor = SlatePrimary,
+                containerColor = SageAccent,
                 contentColor = Color.White
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Nuova nota")
@@ -262,10 +262,7 @@ private fun NotesTopBar(
 
         IconButton(
             onClick = onLogout,
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.12f))
+            modifier = Modifier.size(36.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,

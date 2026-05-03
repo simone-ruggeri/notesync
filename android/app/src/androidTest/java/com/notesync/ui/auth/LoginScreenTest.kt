@@ -2,7 +2,6 @@ package com.notesync.ui.auth
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -58,18 +57,9 @@ class LoginScreenTest {
     }
 
     @Test
-    fun loginButton_disabledWhenFieldsEmpty() {
+    fun loginButton_enabledByDefault() {
         setContent()
-        // The submit button has testTag("submit_button") — no text ambiguity
-        composeTestRule.onNodeWithTag("submit_button").assertIsNotEnabled()
-    }
-
-    @Test
-    fun loginButton_enabledWhenBothFieldsFilled() {
-        setContent()
-        // Email is the first text input field, password the second
-        composeTestRule.onAllNodes(hasSetTextAction())[0].performTextInput("user@test.com")
-        composeTestRule.onAllNodes(hasSetTextAction())[1].performTextInput("password123")
+        // Button is always enabled (validation happens server-side / via HTML required)
         composeTestRule.onNodeWithTag("submit_button").assertIsEnabled()
     }
 

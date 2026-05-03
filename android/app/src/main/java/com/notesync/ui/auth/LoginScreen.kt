@@ -19,6 +19,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -151,7 +153,7 @@ fun LoginScreen(
                     else viewModel.register(email, password)
                 },
                 modifier = Modifier.fillMaxWidth().testTag("submit_button"),
-                enabled = !uiState.isLoading && email.isNotBlank() && password.isNotBlank(),
+                enabled = !uiState.isLoading,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SlatePrimary,
@@ -196,7 +198,7 @@ private fun SegmentedControl(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) Color.White else Color.Transparent)
+                    .background(if (isSelected) SageAccent else Color.Transparent)
                     .clickable { onSelect(index) }
                     .padding(vertical = 9.dp),
                 contentAlignment = Alignment.Center
@@ -204,8 +206,7 @@ private fun SegmentedControl(
                 Text(
                     text = text,
                     style = MaterialTheme.typography.bodySmall,
-                    // Testo scuro su entrambi gli stati per garantire il contrasto
-                    color = if (isSelected) SlatePrimary else TextPrimary
+                    color = if (isSelected) Color.White else TextPrimary
                 )
             }
         }
@@ -229,6 +230,8 @@ private fun FlatTextField(
     placeholder: String = "",
     isPassword: Boolean = false
 ) {
+    var showPassword by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -237,26 +240,48 @@ private fun FlatTextField(
             .border(0.5.dp, FieldBorder, RoundedCornerShape(10.dp))
             .padding(horizontal = 12.dp, vertical = 11.dp)
     ) {
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            singleLine = true,
-            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary),
-            cursorBrush = SolidColor(SlatePrimary),
-            decorationBox = { innerTextField ->
-                Box {
-                    if (value.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFFBBBBBB)
-                        )
-                    }
-                    innerTextField()
-                }
-            },
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    singleLine = true,
+                    visualTransformation = if (isPassword && !showPassword) PasswordVisualTransformation() else VisualTransformation.None,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary),
+                    cursorBrush = SolidColor(SlatePrimary),
+                    decorationBox = { innerTextField ->
+                        Box {
+                            if (value.isEmpty()) {
+                                Text(
+                                    text = placeholder,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFFBBBBBB)
+                                )
+                            }
+                            innerTextField()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            if (isPassword) {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable { showPassword = !showPassword },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = if (showPassword) "Nascondi password" else "Mostra password",
+                        tint = Color(0xFFAAAAAA),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
     }
 }
