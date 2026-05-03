@@ -15,27 +15,23 @@ const lastUpdated = ref<number | null>(null)
 
 const canSave = computed(() => title.value.trim().length > 0 && !isSaving.value)
 
-onMounted(() => {
-  // Cerca la nota nello store locale (già caricato dalla lista).
-  // Questo evita una chiamata API extra se l'utente arriva dalla lista note.
-  const note = notesStore.notes.find(n => n.id === noteId)
+onMounted(async () => {
+  // Cerca prima nello store locale (già caricato dalla lista note).
+  // Evita una chiamata API extra se l'utente arriva dalla lista.
+  let note = notesStore.notes.find(n => n.id === noteId)
+
+  if (!note) {
+    // Fallback: accesso diretto all'URL (link esterno o refresh pagina)
+    await notesStore.fetchNotes()
+    note = notesStore.notes.find(n => n.id === noteId)
+  }
+
   if (note) {
     title.value = note.title
     content.value = note.content
     lastUpdated.value = note.updatedAt
   } else {
-    // Fallback: se arriva direttamente all'URL (es. link diretto o refresh),
-    // carica tutte le note e poi cerca quella giusta
-    notesStore.fetchNotes().then(() => {
-      const loaded = notesStore.notes.find(n => n.id === noteId)
-      if (loaded) {
-        title.value = loaded.title
-        content.value = loaded.content
-        lastUpdated.value = loaded.updatedAt
-      } else {
-        navigateTo('/notes')   // nota non trovata → torna alla lista
-      }
-    })
+    navigateTo('/notes')
   }
 })
 

@@ -6,7 +6,7 @@ export function useApi() {
 
   function getToken(): string | null {
     if (!import.meta.client) return null
-    return localStorage.getItem('notesync_token')
+    return localStorage.getItem(STORAGE_KEYS.token)
   }
 
   async function request<T>(path: string, options: Parameters<typeof $fetch>[1] = {}): Promise<T> {
@@ -22,15 +22,16 @@ export function useApi() {
         }
       })
     } catch (err: unknown) {
-      const fetchError = err as { statusCode?: number; status?: number; data?: { message?: string } }
-      const statusCode = fetchError.statusCode ?? fetchError.status ?? 500
+      // Nuxt $fetch lancia sempre un FetchError con questa struttura — il cast è sicuro.
+      const fetchError = err as { statusCode?: number; data?: { message?: string } }
+      const statusCode = fetchError.statusCode ?? 500
 
       if (statusCode === 401) {
         // Token scaduto: pulisce lo stato locale prima di mandare al login
         if (import.meta.client) {
-          localStorage.removeItem('notesync_token')
-          localStorage.removeItem('notesync_userId')
-          localStorage.removeItem('notesync_email')
+          localStorage.removeItem(STORAGE_KEYS.token)
+          localStorage.removeItem(STORAGE_KEYS.userId)
+          localStorage.removeItem(STORAGE_KEYS.email)
         }
         await navigateTo('/login')
       }

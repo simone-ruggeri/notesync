@@ -26,9 +26,9 @@ export const useAuthStore = defineStore('auth', () => {
   function hydrate() {
     // import.meta.client è true solo nel browser — mai sul server Node.js
     if (!import.meta.client) return
-    token.value = localStorage.getItem('notesync_token')
-    userId.value = localStorage.getItem('notesync_userId')
-    email.value = localStorage.getItem('notesync_email')
+    token.value = localStorage.getItem(STORAGE_KEYS.token)
+    userId.value = localStorage.getItem(STORAGE_KEYS.userId)
+    email.value = localStorage.getItem(STORAGE_KEYS.email)
   }
 
   // --- Actions ---
@@ -62,9 +62,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
-    localStorage.removeItem('notesync_token')
-    localStorage.removeItem('notesync_userId')
-    localStorage.removeItem('notesync_email')
+    localStorage.removeItem(STORAGE_KEYS.token)
+    localStorage.removeItem(STORAGE_KEYS.userId)
+    localStorage.removeItem(STORAGE_KEYS.email)
     token.value = null
     userId.value = null
     email.value = null
@@ -80,9 +80,9 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = newToken
     userId.value = newUserId
     email.value = newEmail
-    localStorage.setItem('notesync_token', newToken)
-    localStorage.setItem('notesync_userId', newUserId)
-    localStorage.setItem('notesync_email', newEmail)
+    localStorage.setItem(STORAGE_KEYS.token, newToken)
+    localStorage.setItem(STORAGE_KEYS.userId, newUserId)
+    localStorage.setItem(STORAGE_KEYS.email, newEmail)
   }
 
   function _parseError(err: unknown, fallback: string): string {
