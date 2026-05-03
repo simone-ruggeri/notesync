@@ -4,8 +4,11 @@ import com.notesync.data.remote.ApiService
 import com.notesync.data.remote.dto.AuthRequest
 import com.notesync.util.TokenManager
 
+/** Risultato di un'operazione di autenticazione (login o registrazione). */
 sealed class AuthResult<out T> {
+    /** Operazione riuscita. [data] contiene il valore restituito (Unit per login/register). */
     data class Success<T>(val data: T) : AuthResult<T>()
+    /** Operazione fallita. [message] è un messaggio leggibile da mostrare all'utente. */
     data class Error(val message: String) : AuthResult<Nothing>()
 }
 
@@ -17,7 +20,7 @@ class AuthRepository(
         return try {
             val response = apiService.register(AuthRequest(email, password))
             if (response.isSuccessful) {
-                val body = response.body()!!
+                val body = response.body() ?: return AuthResult.Error("Risposta vuota dal server")
                 tokenManager.saveToken(body.token)
                 tokenManager.saveUserId(body.userId)
                 tokenManager.saveEmail(email)
@@ -39,7 +42,7 @@ class AuthRepository(
         return try {
             val response = apiService.login(AuthRequest(email, password))
             if (response.isSuccessful) {
-                val body = response.body()!!
+                val body = response.body() ?: return AuthResult.Error("Risposta vuota dal server")
                 tokenManager.saveToken(body.token)
                 tokenManager.saveUserId(body.userId)
                 tokenManager.saveEmail(email)
@@ -59,5 +62,4 @@ class AuthRepository(
         tokenManager.clearToken()
     }
 
-    suspend fun isLoggedIn(): Boolean = tokenManager.isLoggedIn()
 }

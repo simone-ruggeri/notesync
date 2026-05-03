@@ -6,10 +6,12 @@ import com.notesync.data.local.NoteEntity
 import com.notesync.data.local.SyncStatus
 import com.notesync.data.remote.ApiService
 import com.notesync.data.remote.dto.CreateNoteRequest
+import com.notesync.data.remote.dto.NoteDto
 import com.notesync.domain.model.Note
 import com.notesync.domain.model.toDomain
 import com.notesync.util.NetworkChecker
 import com.notesync.util.TokenManager
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -25,6 +27,7 @@ class NoteRepository(
     private val tokenManager: TokenManager,
     private val network: NetworkChecker
 ) {
+    @OptIn(ExperimentalCoroutinesApi::class)
     val notes: Flow<List<Note>> = tokenManager.userIdFlow
         .flatMapLatest { userId ->
             if (userId == null) flowOf(emptyList())
@@ -94,29 +97,39 @@ class NoteRepository(
         if (response.isSuccessful) {
             val serverNotes = response.body() ?: return
             val serverIds = serverNotes.map { it.id }
-            val entities = serverNotes.map { dto ->
-                val existing = noteDao.getNoteByServerId(dto.id)
-                    ?: noteDao.getPendingCreateByContent(currentUserId, dto.title, dto.content)
-                NoteEntity(
-                    id = existing?.id ?: dto.id,
-                    serverId = dto.id,
-                    userId = currentUserId,
-                    title = dto.title, content = dto.content,
-                    createdAt = dto.createdAt, updatedAt = dto.updatedAt,
-                    syncStatus = SyncStatus.SYNCED.name
-                )
-            }
-            noteDao.insertAll(entities)
-            // Rimuove le note locali SYNCED che non esistono più sul server:
-            // significa che sono state eliminate da un altro client (es. web).
-            // Se il server restituisce lista vuota, elimina tutte le note SYNCED.
-            if (serverIds.isEmpty()) {
-                noteDao.deleteSyncedForUser(currentUserId)
-            } else {
-                noteDao.deleteSyncedNotesNotInServerIds(currentUserId, serverIds)
-            }
+            noteDao.insertAll(mapServerNotesToEntities(currentUserId, serverNotes))
+            removeStaleLocalNotes(currentUserId, serverIds)
         } else {
             throw IOException("Errore server: ${response.code()}")
+        }
+    }
+
+    // Converte le note ricevute dal server in NoteEntity locali.
+    // Se esiste già una nota con lo stesso serverId (o con stesso titolo+contenuto in
+    // stato PENDING_CREATE) riutilizza il suo id locale per evitare duplicati.
+    private suspend fun mapServerNotesToEntities(userId: String, serverNotes: List<NoteDto>): List<NoteEntity> {
+        return serverNotes.map { dto ->
+            val existing = noteDao.getNoteByServerId(dto.id)
+                ?: noteDao.getPendingCreateByContent(userId, dto.title, dto.content)
+            NoteEntity(
+                id = existing?.id ?: dto.id,
+                serverId = dto.id,
+                userId = userId,
+                title = dto.title, content = dto.content,
+                createdAt = dto.createdAt, updatedAt = dto.updatedAt,
+                syncStatus = SyncStatus.SYNCED.name
+            )
+        }
+    }
+
+    // Rimuove le note locali SYNCED che non sono più presenti nella risposta del server:
+    // significa che sono state eliminate da un altro client (es. web).
+    // Le note PENDING_* non vengono toccate perché sono operazioni offline in attesa.
+    private suspend fun removeStaleLocalNotes(userId: String, serverIds: List<String>) {
+        if (serverIds.isEmpty()) {
+            noteDao.deleteSyncedForUser(userId)
+        } else {
+            noteDao.deleteSyncedNotesNotInServerIds(userId, serverIds)
         }
     }
 
@@ -165,6 +178,8 @@ class NoteRepository(
     }
 
     private suspend fun syncDelete(entity: NoteEntity): Boolean {
+        // Se la nota non ha un serverId non è mai arrivata al server:
+        // considerarla già eliminata e procedere con la rimozione locale.
         val serverId = entity.serverId ?: return true
         return try {
             apiService.deleteNote(serverId).isSuccessful

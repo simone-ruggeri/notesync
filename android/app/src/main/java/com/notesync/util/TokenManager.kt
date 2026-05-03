@@ -64,6 +64,8 @@ class TokenManager(private val context: Context) {
     }
 
     suspend fun clearToken() {
+        // Prima aggiorna DataStore, poi azzera la cache in memoria.
+        // Così AuthInterceptor non può usare un token cancellato mentre DataStore sta scrivendo.
         context.dataStore.edit { preferences ->
             preferences.remove(TOKEN_KEY)
             preferences.remove(USER_ID_KEY)

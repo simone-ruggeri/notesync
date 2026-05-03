@@ -47,6 +47,8 @@ class NotesViewModel(
         refresh()
     }
 
+    // Filtra _allNotes in base alla searchQuery corrente e aggiorna uiState.
+    // Chiamata sia quando arrivano nuove note dal DB, sia quando cambia la query.
     private fun applyFilter() {
         val query = _uiState.value.searchQuery
         val all = _allNotes.value

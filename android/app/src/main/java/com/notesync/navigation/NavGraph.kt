@@ -4,9 +4,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -26,23 +25,23 @@ fun NavGraph(
     tokenManager: TokenManager,
     modifier: Modifier = Modifier
 ) {
-    // null = loading (no emission received yet), false = not logged in, true = logged in
-    val isLoggedInState = remember { mutableStateOf<Boolean?>(null) }
-
-    LaunchedEffect(Unit) {
+    // null = DataStore non ha ancora emesso (avvio app, pochi ms)
+    // true = utente autenticato, false = non autenticato
+    // produceState gestisce automaticamente la cancellazione quando il composable esce dalla composizione.
+    val isLoggedIn: Boolean? by produceState<Boolean?>(initialValue = null) {
         tokenManager.userIdFlow.collect { userId ->
-            isLoggedInState.value = userId != null
+            value = userId != null
         }
     }
 
-    if (isLoggedInState.value == null) {
+    if (isLoggedIn == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
 
-    val startDestination = if (isLoggedInState.value == true) {
+    val startDestination = if (isLoggedIn == true) {
         NavigationRoute.Notes.route
     } else {
         NavigationRoute.Login.route
