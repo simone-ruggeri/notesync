@@ -10,9 +10,12 @@ import io.ktor.server.routing.routing
 fun Application.configureRouting() {
     val userRepo = UserRepository()
     val noteRepo = NoteRepository()
+    // Il secret è letto una sola volta qui e passato esplicitamente alle route che lo usano.
+    // Security.kt lo legge separatamente per configurare il JWT verifier.
+    val jwtSecret = environment.config.property("jwt.secret").getString()
 
     routing {
-        authRoutes(userRepo)
+        authRoutes(userRepo, jwtSecret)
         noteRoutes(noteRepo)
     }
 }

@@ -49,7 +49,7 @@ class NoteRepository {
             it[updatedAt] = System.currentTimeMillis()
         }
         if (updated == 0) null
-        else getById(id, userId)
+        else fetchById(id, userId) // chiamata dentro la transaction già aperta
     }
 
     fun delete(id: String, userId: String): Boolean = transaction {
@@ -59,14 +59,16 @@ class NoteRepository {
         } > 0
     }
 
-    private fun getById(id: String, userId: String): Note? = transaction {
+    // Senza transaction{} perché va chiamata solo dall'interno di un blocco
+    // transaction già esistente (es. update). Avviare una transaction annidata
+    // sarebbe ridondante e creerebbe un savepoint inutile.
+    private fun fetchById(id: String, userId: String): Note? =
         Notes.selectAll()
             .where {
                 (Notes.id eq UUID.fromString(id)) and
                         (Notes.userId eq UUID.fromString(userId))
             }
             .firstOrNull()?.let { rowToNote(it) }
-    }
 
     private fun rowToNote(row: ResultRow) = Note(
         id        = row[Notes.id].toString(),

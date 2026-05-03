@@ -7,7 +7,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.application
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlinx.serialization.Serializable
@@ -22,16 +21,19 @@ data class LoginRequest(val email: String, val password: String)
 @Serializable
 data class AuthResponse(val token: String, val userId: String)
 
-fun Route.authRoutes(userRepo: UserRepository) {
+// Regex per validazione email: richiede testo@dominio.estensione senza spazi.
+// Non copre tutti gli edge case RFC 5321, ma filtra input palesemente invalidi.
+private val EMAIL_REGEX = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
+
+// Il secret JWT viene passato da Routing.kt, che è già l'unico posto che legge la config.
+fun Route.authRoutes(userRepo: UserRepository, jwtSecret: String) {
     route("/api/auth") {
-        // Legge il secret una volta sola per tutte le route del blocco
-        val secret = application.environment.config.property("jwt.secret").getString()
 
         // POST /api/auth/register
         post("/register") {
             val request = call.receive<RegisterRequest>()
 
-            if (!request.email.contains("@")) {
+            if (!EMAIL_REGEX.matches(request.email)) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Email non valida"))
                 return@post
             }
@@ -44,7 +46,7 @@ fun Route.authRoutes(userRepo: UserRepository) {
             val hashedPassword = BCrypt.hashpw(request.password, BCrypt.gensalt(10))
             val user = userRepo.create(request.email, hashedPassword)
 
-            val token = JwtConfig.generateToken(user.id, secret) // ← passa secret
+            val token = JwtConfig.generateToken(user.id, jwtSecret)
             call.respond(HttpStatusCode.Created, AuthResponse(token, user.id))
         }
 
@@ -58,7 +60,7 @@ fun Route.authRoutes(userRepo: UserRepository) {
                 return@post
             }
 
-            val token = JwtConfig.generateToken(user.id, secret) // ← passa secret
+            val token = JwtConfig.generateToken(user.id, jwtSecret)
             call.respond(HttpStatusCode.OK, AuthResponse(token, user.id))
         }
     }
