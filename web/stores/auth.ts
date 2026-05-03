@@ -39,7 +39,6 @@ export const useAuthStore = defineStore('auth', () => {
       const api = useApi()
       const response = await api.login(emailInput, password)
       _saveSession(response.token, response.userId, emailInput)
-      await navigateTo('/notes')
     } catch (err) {
       error.value = _parseError(err, 'Credenziali non valide')
     } finally {
@@ -55,7 +54,6 @@ export const useAuthStore = defineStore('auth', () => {
       const api = useApi()
       const response = await api.register(emailInput, password)
       _saveSession(response.token, response.userId, emailInput)
-      await navigateTo('/notes')
     } catch (err) {
       error.value = _parseError(err, 'Registrazione fallita')
     } finally {

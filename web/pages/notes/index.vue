@@ -9,8 +9,6 @@ const notesStore = useNotesStore()
 const confirmOpen = ref(false)
 const noteToDelete = ref<string | null>(null)
 
-// onMounted si esegue solo nel browser, dopo che Vue ha montato il componente.
-// È il posto giusto per le chiamate API iniziali.
 onMounted(() => {
   notesStore.fetchNotes()
 })
