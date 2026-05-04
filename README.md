@@ -4,7 +4,7 @@ NoteSync is a full-stack note-taking application that keeps your notes synchroni
 
 The project covers the entire development stack — from a REST API with JWT authentication, to a responsive web interface, to a native Android app with offline support.
 
-**[Live Demo](https://https://notesync-508vsehx4-simone-ruggeris-projects.vercel.app)** | **[Download APK](https://github.com/simone-ruggeri/notesync/releases/latest)**
+**[Live Demo](https://notesync-508vsehx4-simone-ruggeris-projects.vercel.app)** | **[Download APK](https://github.com/simone-ruggeri/notesync/releases/latest)**
 
 ## Features
 - 🔐 **Authentication** – Secure register and login with JWT tokens and bcrypt password hashing.
