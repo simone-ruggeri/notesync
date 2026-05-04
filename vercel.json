@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd web && npm install && npm run generate",
+  "outputDirectory": "web/dist",
+  "framework": null,
+  "installCommand": "echo 'install handled in buildCommand'"
+}
