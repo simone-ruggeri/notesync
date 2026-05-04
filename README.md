@@ -4,7 +4,7 @@ NoteSync is a full-stack note-taking application that keeps your notes synchroni
 
 The project covers the entire development stack — from a REST API with JWT authentication, to a responsive web interface, to a native Android app with offline support.
 
-**[Live Demo](https://.vercel.app)** | **[Download APK](https://github.com/simone-ruggeri/notesync/releases/latest)**
+**[Live Demo](https://https://notesync-508vsehx4-simone-ruggeris-projects.vercel.app)** | **[Download APK](https://github.com/simone-ruggeri/notesync/releases/latest)**
 
 ## Features
 - 🔐 **Authentication** – Secure register and login with JWT tokens and bcrypt password hashing.
@@ -50,8 +50,8 @@ Dependency injection is implemented with **Koin**, keeping modules decoupled and
 Register and login screens on web.
 
 <p>
-  <img src="screenshots/login_web_screenshot.png" width="440"/>
-  <img src="screenshots/register_web_screenshot.png" width="440"/>
+  <img src="screenshots/login_web_screenshot.png" width="560"/>
+  <img src="screenshots/register_web_screenshot.png" width="560"/>
 </p>
 
 
@@ -59,9 +59,9 @@ Register and login screens on web.
 Note list, creation, and editing.
 
 <p>
-  <img src="screenshots/notes_web_screenshot.png" width="440"/>
-  <img src="screenshots/new_note_web_screenshot.png" width="440"/>
-  <img src="screenshots/modify_note_web_screenshot.png" width="440"/>
+  <img src="screenshots/notes_web_screenshot.png" width="560"/>
+  <img src="screenshots/new_note_web_screenshot.png" width="560"/>
+  <img src="screenshots/modify_note_web_screenshot.png" width="560"/>
 </p>
 
 ### Android
