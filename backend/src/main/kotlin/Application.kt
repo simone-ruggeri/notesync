@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.plugins.configureCors
 import com.example.plugins.configureDatabases
 import com.example.plugins.configureMonitoring
 import com.example.plugins.configureRouting
@@ -12,6 +13,7 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    configureCors()
     configureSerialization()
     configureDatabases()
     configureMonitoring()

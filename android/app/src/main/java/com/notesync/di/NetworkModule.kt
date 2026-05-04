@@ -1,5 +1,6 @@
 package com.notesync.di
 
+import com.notesync.BuildConfig
 import com.notesync.data.remote.ApiService
 import com.notesync.data.remote.AuthInterceptor
 import okhttp3.OkHttpClient
@@ -10,7 +11,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 val networkModule = module {
-    val BASE_URL = "http://10.0.2.2:8080/"
+    val BASE_URL = BuildConfig.BASE_URL
 
     single { AuthInterceptor(get()) }
 

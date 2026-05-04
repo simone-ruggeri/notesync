@@ -1,0 +1,26 @@
+package com.example.plugins
+
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.plugins.cors.routing.*
+
+fun Application.configureCors() {
+    install(CORS) {
+        allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Get)
+        allowMethod(HttpMethod.Post)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
+        allowHeader(HttpHeaders.Authorization)
+        allowHeader(HttpHeaders.ContentType)
+        val frontendUrl = System.getenv("FRONTEND_URL") ?: ""
+        if (frontendUrl.isNotEmpty()) {
+            allowHost(
+                frontendUrl.removePrefix("https://").removePrefix("http://"),
+                schemes = listOf("https")
+            )
+        } else {
+            anyHost()
+        }
+    }
+}
