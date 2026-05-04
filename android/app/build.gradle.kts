@@ -45,7 +45,7 @@ android {
                 "proguard-rules.pro"
             )
             // Aggiornare con l'URL Render dopo il deploy: https://YOUR-SERVICE.onrender.com/
-            buildConfigField("String", "BASE_URL", "\"https://YOUR-SERVICE.onrender.com/\"")
+            buildConfigField("String", "BASE_URL", "\"https://notesync-qkj9.onrender.com/\"")
             signingConfig = signingConfigs.getByName("release")
         }
     }
